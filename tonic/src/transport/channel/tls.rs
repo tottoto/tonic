@@ -88,16 +88,16 @@ impl ClientTlsConfig {
         }
     }
 
-    pub(crate) fn tls_connector(&self, uri: Uri) -> Result<TlsConnector, crate::Error> {
+    pub(crate) fn tls_connector(self, uri: &Uri) -> Result<TlsConnector, crate::Error> {
         let domain = match &self.domain {
             Some(domain) => domain,
             None => uri.host().ok_or_else(Error::new_invalid_uri)?,
         };
         TlsConnector::new(
-            self.certs.clone(),
-            self.root_certs.clone(),
-            self.identity.clone(),
-            domain,
+            self.certs,
+            self.root_certs,
+            self.identity,
+            &domain,
             self.assume_http2,
         )
     }
