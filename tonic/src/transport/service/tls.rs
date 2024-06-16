@@ -51,9 +51,6 @@ impl TlsConnector {
         #[cfg(feature = "tls-roots")]
         roots.add_parsable_certificates(rustls_native_certs::load_native_certs()?);
 
-        #[cfg(feature = "tls-webpki-roots")]
-        roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
-
         for cert in ca_certs {
             add_certificate_to_root_store(&cert, &mut roots)?;
         }
