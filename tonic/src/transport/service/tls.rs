@@ -16,7 +16,7 @@ use tokio_rustls::{
 use super::io::BoxedIo;
 use crate::transport::{
     server::{Connected, TlsStream},
-    Certificate, Identity,
+    CertKind, Certificate, Identity,
 };
 use hyper_util::rt::TokioIo;
 
@@ -52,7 +52,7 @@ impl TlsConnector {
         roots.add_parsable_certificates(rustls_native_certs::load_native_certs()?);
 
         for cert in ca_certs {
-            add_certificate_to_root_store(&cert, &mut roots)?;
+            add_certificate_to_root_store(cert, &mut roots)?;
         }
 
         let builder = builder.with_root_certificates(roots);
@@ -114,7 +114,7 @@ impl TlsAcceptor {
             None => builder.with_no_client_auth(),
             Some(cert) => {
                 let mut roots = RootCertStore::empty();
-                add_certificate_to_root_store(&cert, &mut roots)?;
+                add_certificate_to_root_store(cert, &mut roots)?;
                 let verifier = if client_auth_optional {
                     WebPkiClientVerifier::builder(roots.into()).allow_unauthenticated()
                 } else {
@@ -167,9 +167,12 @@ impl std::error::Error for TlsError {}
 fn load_identity(
     identity: Identity,
 ) -> Result<(Vec<CertificateDer<'static>>, PrivateKeyDer<'static>), TlsError> {
-    let cert = rustls_pemfile::certs(&mut Cursor::new(identity.cert))
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|_| TlsError::CertificateParseError)?;
+    let cert = match identity.cert.kind {
+        CertKind::Der(cert) => vec![cert.into()],
+        CertKind::Pem(pem) => rustls_pemfile::certs(&mut Cursor::new(pem))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|_| TlsError::CertificateParseError)?,
+    };
 
     let Ok(Some(key)) = rustls_pemfile::private_key(&mut Cursor::new(identity.key)) else {
         return Err(TlsError::PrivateKeyParseError);
@@ -179,14 +182,22 @@ fn load_identity(
 }
 
 fn add_certificate_to_root_store(
-    certificate: &Certificate,
+    certificate: Certificate,
     roots: &mut RootCertStore,
 ) -> Result<(), crate::Error> {
-    let mut certs = &mut Cursor::new(certificate);
-    for cert in rustls_pemfile::certs(&mut certs).collect::<Result<Vec<_>, _>>()? {
-        roots
-            .add(cert)
-            .map_err(|_| TlsError::CertificateParseError)?;
+    match certificate.kind {
+        CertKind::Der(der) => {
+            roots
+                .add(der.into())
+                .map_err(|_| TlsError::CertificateParseError)?;
+        }
+        CertKind::Pem(pem) => {
+            for cert in rustls_pemfile::certs(&mut Cursor::new(pem)) {
+                roots
+                    .add(cert?)
+                    .map_err(|_| TlsError::CertificateParseError)?;
+            }
+        }
     }
 
     Ok(())
