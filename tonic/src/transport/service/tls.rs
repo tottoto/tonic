@@ -54,7 +54,7 @@ impl TlsConnector {
         roots.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
 
         for cert in ca_certs {
-            add_certs_from_pem(&mut Cursor::new(cert), &mut roots)?;
+            add_certificate_to_root_store(&cert, &mut roots)?;
         }
 
         let builder = builder.with_root_certificates(roots);
@@ -116,7 +116,7 @@ impl TlsAcceptor {
             None => builder.with_no_client_auth(),
             Some(cert) => {
                 let mut roots = RootCertStore::empty();
-                add_certs_from_pem(&mut Cursor::new(cert), &mut roots)?;
+                add_certificate_to_root_store(&cert, &mut roots)?;
                 let verifier = if client_auth_optional {
                     WebPkiClientVerifier::builder(roots.into()).allow_unauthenticated()
                 } else {
@@ -180,10 +180,11 @@ fn load_identity(
     Ok((cert, key))
 }
 
-fn add_certs_from_pem(
-    mut certs: &mut dyn std::io::BufRead,
+fn add_certificate_to_root_store(
+    certificate: &Certificate,
     roots: &mut RootCertStore,
 ) -> Result<(), crate::Error> {
+    let mut certs = &mut Cursor::new(certificate);
     for cert in rustls_pemfile::certs(&mut certs).collect::<Result<Vec<_>, _>>()? {
         roots
             .add(cert)
