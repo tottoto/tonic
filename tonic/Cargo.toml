@@ -29,7 +29,6 @@ zstd = ["dep:zstd"]
 default = ["transport", "codegen", "prost"]
 prost = ["dep:prost"]
 tls = ["dep:rustls-pemfile", "transport", "dep:tokio-rustls", "dep:tokio", "tokio?/rt", "tokio?/macros"]
-tls-roots = ["tls-roots-common", "dep:rustls-native-certs"]
 tls-roots-common = ["tls"]
 router = ["dep:axum"]
 transport = [
@@ -81,7 +80,6 @@ axum = {version = "0.7", default-features = false, optional = true}
 
 # rustls
 rustls-pemfile = { version = "2.0", optional = true }
-rustls-native-certs = { version = "0.7", optional = true }
 tokio-rustls = { version = "0.26", default-features = false, features = ["logging", "tls12", "ring"], optional = true }
 
 # compression

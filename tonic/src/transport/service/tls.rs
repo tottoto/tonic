@@ -48,9 +48,6 @@ impl TlsConnector {
         let builder = ClientConfig::builder();
         let mut roots = RootCertStore::from_iter(trust_anchors);
 
-        #[cfg(feature = "tls-roots")]
-        roots.add_parsable_certificates(rustls_native_certs::load_native_certs()?);
-
         for cert in ca_certs {
             add_certificate_to_root_store(cert, &mut roots)?;
         }

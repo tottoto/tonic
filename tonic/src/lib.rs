@@ -24,9 +24,6 @@
 //! for [`tonic-build`]. Enabled by default.
 //! - `tls`: Enables the `rustls` based TLS options for the `transport` feature. Not
 //! enabled by default.
-//! - `tls-roots`: Adds system trust roots to `rustls`-based gRPC clients using the
-//! `rustls-native-certs` crate. Not enabled by default. `tls` must be enabled to use
-//! `tls-roots`.
 //! - `prost`: Enables the [`prost`] based gRPC [`Codec`] implementation.
 //! - `gzip`: Enables compressing requests, responses, and streams.
 //! Depends on [flate2]. Not enabled by default.
