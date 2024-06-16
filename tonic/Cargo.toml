@@ -29,7 +29,6 @@ zstd = ["dep:zstd"]
 default = ["transport", "codegen", "prost"]
 prost = ["dep:prost"]
 tls = ["dep:rustls-pemfile", "transport", "dep:tokio-rustls", "dep:tokio", "tokio?/rt", "tokio?/macros"]
-tls-roots-common = ["tls"]
 router = ["dep:axum"]
 transport = [
   "router",
